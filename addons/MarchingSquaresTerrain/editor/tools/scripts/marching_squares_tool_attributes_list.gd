@@ -69,7 +69,7 @@ var material : Dictionary = {
 	"name": "material",
 	"type": "option",
 	"label": "Material",
-	"options": vp_tex_names.texture_names,
+	"options": vp_tex_names.floor_texture_names,
 	"default": 0,
 }
 
@@ -78,6 +78,20 @@ var texture_name : Dictionary = {
 	"type": "text",
 	"label": "Texture Name",
 	"default": "New name here...",
+}
+
+var texture_preset : Dictionary = {
+	"name": "texture_preset",
+	"type": "preset",
+	"label": "Texture Preset",
+	"default": null,
+}
+
+var quick_paint_selection : Dictionary = {
+	"name": "quick_paint_selection",
+	"type": "quick_paint",
+	"label": "Quick Paint",
+	"default": null,
 }
 
 var chunk_management : Dictionary = {
@@ -90,13 +104,6 @@ var terrain_settings : Dictionary = {
 	"name": "terrain_settings",
 	"type": "terrain",
 	"label": "Terrain Settings",
-}
-
-var preset_selection : Dictionary = {
-	"name": "preset_selection",
-	"type": "preset",
-	"label": "Preset",
-	"default": null,
 }
 
 """

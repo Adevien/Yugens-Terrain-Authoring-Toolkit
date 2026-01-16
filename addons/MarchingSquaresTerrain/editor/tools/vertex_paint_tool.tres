@@ -10,6 +10,7 @@ brush_type = true
 size = true
 material = true
 texture_name = true
+texture_preset = true
 metadata/_custom_type_script = "uid://b6jopat61dbd3"
 
 [resource]

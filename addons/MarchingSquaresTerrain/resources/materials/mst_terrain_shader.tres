@@ -1,7 +1,43 @@
-[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://bahbybbjwkhlg"]
+[gd_resource type="ShaderMaterial" load_steps=4 format=3 uid="uid://bahbybbjwkhlg"]
 
 [ext_resource type="Shader" uid="uid://ltkimbmrvpyo" path="res://addons/MarchingSquaresTerrain/resources/shaders/mst_terrain.gdshader" id="1_cywoj"]
+[ext_resource type="Texture2D" uid="uid://csvthlqhb8g5j" path="res://addons/MarchingSquaresTerrain/resources/materials/void_texture.tres" id="2_f8vgh"]
+[ext_resource type="Texture2D" uid="uid://dbnc04k3n0sro" path="res://addons/MarchingSquaresTerrain/resources/materials/grass_terrain_noise.res" id="3_30qmr"]
 
 [resource]
 render_priority = 0
 shader = ExtResource("1_cywoj")
+shader_parameter/wall_threshold = 0.0
+shader_parameter/chunk_size = Vector3i(33, 32, 33)
+shader_parameter/ground_albedo = Color(0.392, 0.471, 0.318, 1)
+shader_parameter/ground_albedo_2 = Color(0.322, 0.482, 0.384, 1)
+shader_parameter/ground_albedo_3 = Color(0.373, 0.424, 0.294, 1)
+shader_parameter/ground_albedo_4 = Color(0.392, 0.475, 0.255, 1)
+shader_parameter/ground_albedo_5 = Color(0.29, 0.494, 0.365, 1)
+shader_parameter/ground_albedo_6 = Color(0.443, 0.447, 0.365, 1)
+shader_parameter/wall_albedo = Color(0.369, 0.337, 0.271, 1)
+shader_parameter/wall_albedo_2 = Color(0.4, 0.35, 0.28, 1)
+shader_parameter/wall_albedo_3 = Color(0.35, 0.32, 0.25, 1)
+shader_parameter/wall_albedo_4 = Color(0.38, 0.34, 0.27, 1)
+shader_parameter/wall_albedo_5 = Color(0.36, 0.33, 0.26, 1)
+shader_parameter/wall_albedo_6 = Color(0.42, 0.38, 0.3, 1)
+shader_parameter/wall_tex_1 = ExtResource("3_30qmr")
+shader_parameter/wall_tex_2 = ExtResource("3_30qmr")
+shader_parameter/wall_tex_3 = ExtResource("3_30qmr")
+shader_parameter/wall_tex_4 = ExtResource("3_30qmr")
+shader_parameter/wall_tex_5 = ExtResource("3_30qmr")
+shader_parameter/wall_tex_6 = ExtResource("3_30qmr")
+shader_parameter/use_hard_square_edges = false
+shader_parameter/blend_sharpness = 5.0
+shader_parameter/blend_noise_scale = 10.0
+shader_parameter/blend_noise_strength = 0.0
+shader_parameter/vc_tex_rr = ExtResource("3_30qmr")
+shader_parameter/vc_tex_rg = ExtResource("3_30qmr")
+shader_parameter/vc_tex_rb = ExtResource("3_30qmr")
+shader_parameter/vc_tex_ra = ExtResource("3_30qmr")
+shader_parameter/vc_tex_gr = ExtResource("3_30qmr")
+shader_parameter/vc_tex_gg = ExtResource("3_30qmr")
+shader_parameter/vc_tex_aa = ExtResource("2_f8vgh")
+shader_parameter/shadow_color = Color(0, 0, 0, 1)
+shader_parameter/bands = 5
+shader_parameter/shadow_intensity = 0.0

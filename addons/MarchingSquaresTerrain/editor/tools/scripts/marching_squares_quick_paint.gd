@@ -1,0 +1,41 @@
+@tool
+extends Resource
+class_name MarchingSquaresQuickPaint
+
+
+const TEXTURE_NAMES = preload("res://addons/MarchingSquaresTerrain/resources/texture_names.tres")
+
+@export var paint_name : String = "New Paint"
+@export var texture_preset_id : int = 0
+
+# Store values (no @export - we define them dynamically)
+var wall_texture_slot : int = 0
+var ground_texture_slot : int = 0
+
+@export_group("Textures")
+@export var has_grass : bool = true
+
+
+# Dynamically define the dropdowns using the shared resource
+func _get_property_list() -> Array[Dictionary]:
+	var properties: Array[Dictionary] = []
+	
+	# Wall texture dropdown
+	properties.append({
+		"name": "wall_texture_slot",
+		"type": TYPE_INT,
+		"hint": PROPERTY_HINT_ENUM,
+		"hint_string": ",".join(TEXTURE_NAMES.wall_texture_names),
+		"usage": PROPERTY_USAGE_DEFAULT,
+	})
+	
+	# Ground texture dropdown
+	properties.append({
+		"name": "ground_texture_slot", 
+		"type": TYPE_INT,
+		"hint": PROPERTY_HINT_ENUM,
+		"hint_string": ",".join(TEXTURE_NAMES.floor_texture_names),
+		"usage": PROPERTY_USAGE_DEFAULT,
+	})
+	
+	return properties

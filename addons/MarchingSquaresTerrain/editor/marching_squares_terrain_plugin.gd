@@ -45,6 +45,8 @@ var mode : TerrainToolMode = TerrainToolMode.BRUSH:
 		mode = value
 		current_draw_pattern.clear()
 
+var vp_texture_names = preload("res://addons/MarchingSquaresTerrain/resources/texture_names.tres")
+
 var current_brush_index : int = 0
 
 var is_chunk_plane_hovered : bool
@@ -62,8 +64,14 @@ var falloff : bool = true
 
 var should_mask_grass : bool = false
 
-# Currently selected preset for biome painting (does NOT change global terrain)
-var selected_preset : MarchingSquaresTerrainPreset = null
+# Currently selected preset for vertex textures (DOES change the global terrain)
+var current_texture_preset : MarchingSquaresTexturePreset = null:
+	set(value):
+		current_texture_preset = value
+		_set_new_textures(value)
+
+# Currently selected preset for quick painting (does NOT change the global terrain)
+var current_quick_paint : MarchingSquaresQuickPaint = null
 
 var vertex_color_idx : int = 0:
 	set(value):
@@ -602,12 +610,12 @@ func draw_pattern(terrain: MarchingSquaresTerrain):
 		undo_redo.commit_action()
 	else:
 		# Handle BRUSH, LEVEL, SMOOTH, BRIDGE modes
-		if selected_preset:
-			# PRESET MODE: Apply all changes as ONE atomic undo/redo action
+		if current_quick_paint:
+			# QUICK PAINT MODE: Apply all changes as ONE atomic undo/redo action
 			# This fixes the issue where 6 separate actions were created per brush stroke
 
 			# Build wall color patterns (with expansion to adjacent cells for boundary walls)
-			_set_vertex_colors(selected_preset.wall_texture_slot)
+			_set_vertex_colors(current_quick_paint.wall_texture_slot)
 
 			var wall_color_pattern := {}
 			var wall_color_pattern_cc := {}
@@ -635,11 +643,11 @@ func draw_pattern(terrain: MarchingSquaresTerrain):
 						for dz in range(-1, 2):
 							if dx == 0 and dz == 0:
 								continue
-
+							
 							var adj_x : int = cell_coords.x + dx
 							var adj_z : int = cell_coords.y + dz
 							var adj_chunk_coords : Vector2i = chunk_coords
-
+							
 							# Handle chunk boundary crossings
 							if adj_x < 0:
 								adj_chunk_coords = Vector2i(chunk_coords.x - 1, chunk_coords.y)
@@ -647,37 +655,37 @@ func draw_pattern(terrain: MarchingSquaresTerrain):
 							elif adj_x >= terrain.dimensions.x:
 								adj_chunk_coords = Vector2i(chunk_coords.x + 1, chunk_coords.y)
 								adj_x = 0
-
+							
 							if adj_z < 0:
 								adj_chunk_coords = Vector2i(adj_chunk_coords.x, chunk_coords.y - 1)
 								adj_z = terrain.dimensions.z - 1
 							elif adj_z >= terrain.dimensions.z:
 								adj_chunk_coords = Vector2i(adj_chunk_coords.x, chunk_coords.y + 1)
 								adj_z = 0
-
+							
 							# Skip if chunk doesn't exist
 							if not terrain.chunks.has(adj_chunk_coords):
 								continue
-
+							
 							var adj_cell := Vector2i(adj_x, adj_z)
-
+							
 							# Skip if already in pattern
 							if wall_color_pattern.has(adj_chunk_coords) and wall_color_pattern[adj_chunk_coords].has(adj_cell):
 								continue
-
+							
 							# Add adjacent cell
 							if not wall_color_pattern.has(adj_chunk_coords):
 								wall_color_pattern[adj_chunk_coords] = {}
 								wall_color_pattern_cc[adj_chunk_coords] = {}
 								wall_color_restore[adj_chunk_coords] = {}
 								wall_color_restore_cc[adj_chunk_coords] = {}
-
+							
 							var adj_chunk : MarchingSquaresTerrainChunk = terrain.chunks[adj_chunk_coords]
 							wall_color_restore[adj_chunk_coords][adj_cell] = adj_chunk.get_wall_color_0(adj_cell)
 							wall_color_restore_cc[adj_chunk_coords][adj_cell] = adj_chunk.get_wall_color_1(adj_cell)
 							wall_color_pattern[adj_chunk_coords][adj_cell] = vertex_color_0
 							wall_color_pattern_cc[adj_chunk_coords][adj_cell] = vertex_color_1
-
+			
 			# Build grass mask patterns
 			var grass_pattern := {}
 			var grass_restore := {}
@@ -687,19 +695,19 @@ func draw_pattern(terrain: MarchingSquaresTerrain):
 				var chunk : MarchingSquaresTerrainChunk = terrain.chunks[chunk_coords]
 				for cell_coords in pattern[chunk_coords]:
 					grass_restore[chunk_coords][cell_coords] = chunk.get_grass_mask(cell_coords)
-					if selected_preset.has_grass:
+					if current_quick_paint.has_grass:
 						grass_pattern[chunk_coords][cell_coords] = Color(1, 1, 0, 0)
 					else:
 						grass_pattern[chunk_coords][cell_coords] = Color(0, 0, 0, 0)
-
+			
 			# Build ground color patterns
-			_set_vertex_colors(selected_preset.ground_texture_slot)
-
+			_set_vertex_colors(current_quick_paint.ground_texture_slot)
+			
 			var color_pattern := {}
 			var color_pattern_cc := {}
 			var color_restore := {}
 			var color_restore_cc := {}
-
+			
 			for chunk_coords in pattern:
 				color_pattern[chunk_coords] = {}
 				color_pattern_cc[chunk_coords] = {}
@@ -711,7 +719,7 @@ func draw_pattern(terrain: MarchingSquaresTerrain):
 					color_restore_cc[chunk_coords][cell_coords] = chunk.get_color_1(cell_coords)
 					color_pattern[chunk_coords][cell_coords] = vertex_color_0
 					color_pattern_cc[chunk_coords][cell_coords] = vertex_color_1
-
+			
 			# Create ONE composite action instead of 6 separate actions
 			var do_patterns := {
 				"height": pattern,
@@ -729,13 +737,13 @@ func draw_pattern(terrain: MarchingSquaresTerrain):
 				"color_0": color_restore,
 				"color_1": color_restore_cc
 			}
-
-			undo_redo.create_action("terrain brush with preset")
+			
+			undo_redo.create_action("terrain brush with quick paint")
 			undo_redo.add_do_method(self, "apply_composite_pattern_action", terrain, do_patterns)
 			undo_redo.add_undo_method(self, "apply_composite_pattern_action", terrain, undo_patterns)
 			undo_redo.commit_action()
 		else:
-			# NON-PRESET MODE: Height-only action (unchanged behavior)
+			# NON-QUICK PAINT MODE: Height-only action (unchanged behavior)
 			undo_redo.create_action("terrain height draw")
 			undo_redo.add_do_method(self, "draw_height_pattern_action", terrain, pattern)
 			undo_redo.add_undo_method(self, "draw_height_pattern_action", terrain, restore_pattern)
@@ -802,12 +810,12 @@ func draw_wall_color_1_pattern_action(terrain: MarchingSquaresTerrain, pattern: 
 		chunk.regenerate_mesh()
 
 
-## Applies all terrain patterns atomically (for preset brush and vertex painting operations)
-## patterns dict keys: "height", "wall_color_0", "wall_color_1", "grass_mask", "color_0", "color_1"
-## This consolidates multiple data changes into ONE undo/redo action with ONE mesh regeneration
+# Applies all terrain patterns atomically (for quick paint brush and vertex painting operations)
+# patterns dict keys: "height", "wall_color_0", "wall_color_1", "grass_mask", "color_0", "color_1"
+# This consolidates multiple data changes into ONE undo/redo action with ONE mesh regeneration
 func apply_composite_pattern_action(terrain: MarchingSquaresTerrain, patterns: Dictionary) -> void:
 	var affected_chunks : Dictionary = {}  # chunk_coords -> chunk reference
-
+	
 	# Apply wall colors FIRST (before height changes that create ridge vertices)
 	if patterns.has("wall_color_0"):
 		for chunk_coords: Vector2i in patterns.wall_color_0:
@@ -816,7 +824,7 @@ func apply_composite_pattern_action(terrain: MarchingSquaresTerrain, patterns: D
 				affected_chunks[chunk_coords] = chunk
 				for cell_coords: Vector2i in patterns.wall_color_0[chunk_coords]:
 					chunk.draw_wall_color_0(cell_coords.x, cell_coords.y, patterns.wall_color_0[chunk_coords][cell_coords])
-
+	
 	if patterns.has("wall_color_1"):
 		for chunk_coords: Vector2i in patterns.wall_color_1:
 			var chunk: MarchingSquaresTerrainChunk = terrain.chunks.get(chunk_coords)
@@ -824,7 +832,7 @@ func apply_composite_pattern_action(terrain: MarchingSquaresTerrain, patterns: D
 				affected_chunks[chunk_coords] = chunk
 				for cell_coords: Vector2i in patterns.wall_color_1[chunk_coords]:
 					chunk.draw_wall_color_1(cell_coords.x, cell_coords.y, patterns.wall_color_1[chunk_coords][cell_coords])
-
+	
 	# Apply height changes (triggers ridge creation which uses wall colors)
 	if patterns.has("height"):
 		for chunk_coords: Vector2i in patterns.height:
@@ -833,7 +841,7 @@ func apply_composite_pattern_action(terrain: MarchingSquaresTerrain, patterns: D
 				affected_chunks[chunk_coords] = chunk
 				for cell_coords: Vector2i in patterns.height[chunk_coords]:
 					chunk.draw_height(cell_coords.x, cell_coords.y, patterns.height[chunk_coords][cell_coords])
-
+	
 	# Apply grass mask
 	if patterns.has("grass_mask"):
 		for chunk_coords: Vector2i in patterns.grass_mask:
@@ -842,7 +850,7 @@ func apply_composite_pattern_action(terrain: MarchingSquaresTerrain, patterns: D
 				affected_chunks[chunk_coords] = chunk
 				for cell_coords: Vector2i in patterns.grass_mask[chunk_coords]:
 					chunk.draw_grass_mask(cell_coords.x, cell_coords.y, patterns.grass_mask[chunk_coords][cell_coords])
-
+	
 	# Apply ground colors LAST
 	if patterns.has("color_0"):
 		for chunk_coords: Vector2i in patterns.color_0:
@@ -851,7 +859,7 @@ func apply_composite_pattern_action(terrain: MarchingSquaresTerrain, patterns: D
 				affected_chunks[chunk_coords] = chunk
 				for cell_coords: Vector2i in patterns.color_0[chunk_coords]:
 					chunk.draw_color_0(cell_coords.x, cell_coords.y, patterns.color_0[chunk_coords][cell_coords])
-
+	
 	if patterns.has("color_1"):
 		for chunk_coords: Vector2i in patterns.color_1:
 			var chunk: MarchingSquaresTerrainChunk = terrain.chunks.get(chunk_coords)
@@ -859,7 +867,7 @@ func apply_composite_pattern_action(terrain: MarchingSquaresTerrain, patterns: D
 				affected_chunks[chunk_coords] = chunk
 				for cell_coords: Vector2i in patterns.color_1[chunk_coords]:
 					chunk.draw_color_1(cell_coords.x, cell_coords.y, patterns.color_1[chunk_coords][cell_coords])
-
+	
 	# Regenerate mesh ONCE for each affected chunk (instead of 6 times!)
 	for chunk in affected_chunks.values():
 		chunk.regenerate_mesh()
@@ -915,6 +923,126 @@ func _set_vertex_colors(vc_idx: int) -> void:
 		15: #aa
 			vertex_color_0 = Color(0.0, 0.0, 0.0, 1.0)
 			vertex_color_1 = Color(0.0, 0.0, 0.0, 1.0)
+
+
+func _set_new_textures(_preset: MarchingSquaresTexturePreset) -> void:
+	if _preset == null:
+		return
+	for i in range(6): # The range is 6 because MarchingSquaresTextureList currently has 6 export variables
+		match i:
+			0: # floor_textures
+				for tex in _preset.new_textures.floor_textures:
+					if tex == null:
+						continue
+					match _preset.new_textures.floor_textures.find(tex):
+						0:
+							current_terrain_node.ground_texture = tex
+						1:
+							current_terrain_node.texture_2 = tex
+						2:
+							current_terrain_node.texture_3 = tex
+						3:
+							current_terrain_node.texture_4 = tex
+						4:
+							current_terrain_node.texture_5 = tex
+						5:
+							current_terrain_node.texture_6 = tex
+						6:
+							current_terrain_node.texture_7 = tex
+						7:
+							current_terrain_node.texture_8 = tex
+						8:
+							current_terrain_node.texture_9 = tex
+						9:
+							current_terrain_node.texture_10 = tex
+						10:
+							current_terrain_node.texture_11 = tex
+						11:
+							current_terrain_node.texture_12 = tex
+						12:
+							current_terrain_node.texture_13 = tex
+						13:
+							current_terrain_node.texture_14 = tex
+			1: # grass_sprites
+				for tex in _preset.new_textures.grass_sprites:
+					if tex == null:
+						continue
+					match _preset.new_textures.grass_sprites.find(tex):
+						0:
+							current_terrain_node.grass_sprite = tex
+						1:
+							current_terrain_node.grass_sprite_tex_2 = tex
+						2:
+							current_terrain_node.grass_sprite_tex_3 = tex
+						3:
+							current_terrain_node.grass_sprite_tex_4 = tex
+						4:
+							current_terrain_node.grass_sprite_tex_5 = tex
+						5:
+							current_terrain_node.grass_sprite_tex_6 = tex
+			2: # grass_colors
+				for col in _preset.new_textures.grass_colors:
+					match _preset.new_textures.grass_colors.find(col):
+						0:
+							current_terrain_node.ground_color = col
+						1:
+							current_terrain_node.ground_color_2 = col
+						2:
+							current_terrain_node.ground_color_3 = col
+						3:
+							current_terrain_node.ground_color_4 = col
+						4:
+							current_terrain_node.ground_color_5 = col
+						5:
+							current_terrain_node.ground_color_6 = col
+			3: # has_grass
+				for val in _preset.new_textures.has_grass:
+					match _preset.new_textures.has_grass.find(val):
+						0:
+							current_terrain_node.tex2_has_grass = val
+						1:
+							current_terrain_node.tex3_has_grass = val
+						2:
+							current_terrain_node.tex4_has_grass = val
+						3:
+							current_terrain_node.tex5_has_grass = val
+						4:
+							current_terrain_node.tex6_has_grass = val
+			4: # wall_textures
+				for tex in _preset.new_textures.wall_textures:
+					if tex == null:
+						continue
+					match _preset.new_textures.wall_textures.find(tex):
+						0:
+							current_terrain_node.wall_texture = tex
+						1:
+							current_terrain_node.wall_texture_2 = tex
+						2:
+							current_terrain_node.wall_texture_3 = tex
+						3:
+							current_terrain_node.wall_texture_4 = tex
+						4:
+							current_terrain_node.wall_texture_5 = tex
+						5:
+							current_terrain_node.wall_texture_6 = tex
+			5: # wall_colors
+				for col in _preset.new_textures.wall_colors:
+					match _preset.new_textures.wall_colors.find(col):
+						0:
+							current_terrain_node.wall_color = col
+						1:
+							current_terrain_node.wall_color_2 = col
+						2:
+							current_terrain_node.wall_color_3 = col
+						3:
+							current_terrain_node.wall_color_4 = col
+						4:
+							current_terrain_node.wall_color_5 = col
+						5:
+							current_terrain_node.wall_color_6 = col
+	
+	vp_texture_names.floor_texture_names = _preset.new_tex_names.floor_texture_names
+	vp_texture_names.wall_texture_names = _preset.new_tex_names.wall_texture_names
 
 
 func get_cell_normal(chunk: MarchingSquaresTerrainChunk, cell: Vector2i) -> Vector3:

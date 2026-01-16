@@ -29,27 +29,27 @@ class_name MarchingSquaresTerrain
 			grass_mat.set_shader_parameter("use_base_color", true)
 		for chunk: MarchingSquaresTerrainChunk in chunks.values():
 			chunk.grass_planter.regenerate_all_cells()
-@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture : Texture2D = preload("res://addons/MarchingSquaresTerrain/resources/materials/grass_terrain_noise.res"):
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture : Texture2D = preload("res://addons/MarchingSquaresTerrain/resources/materials/wall_noise_texture.res"):
 	set(value):
 		wall_texture = value
 		terrain_material.set_shader_parameter("wall_tex_1", value)
-@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_2 : Texture2D:
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_2 : Texture2D = preload("res://addons/MarchingSquaresTerrain/resources/materials/wall_noise_texture.res"):
 	set(value):
 		wall_texture_2 = value
 		terrain_material.set_shader_parameter("wall_tex_2", value)
-@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_3 : Texture2D:
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_3 : Texture2D = preload("res://addons/MarchingSquaresTerrain/resources/materials/wall_noise_texture.res"):
 	set(value):
 		wall_texture_3 = value
 		terrain_material.set_shader_parameter("wall_tex_3", value)
-@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_4 : Texture2D:
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_4 : Texture2D = preload("res://addons/MarchingSquaresTerrain/resources/materials/wall_noise_texture.res"):
 	set(value):
 		wall_texture_4 = value
 		terrain_material.set_shader_parameter("wall_tex_4", value)
-@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_5 : Texture2D:
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_5 : Texture2D = preload("res://addons/MarchingSquaresTerrain/resources/materials/wall_noise_texture.res"):
 	set(value):
 		wall_texture_5 = value
 		terrain_material.set_shader_parameter("wall_tex_5", value)
-@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_6 : Texture2D:
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var wall_texture_6 : Texture2D = preload("res://addons/MarchingSquaresTerrain/resources/materials/wall_noise_texture.res"):
 	set(value):
 		wall_texture_6 = value
 		terrain_material.set_shader_parameter("wall_tex_6", value)
@@ -461,7 +461,7 @@ func _ensure_textures() -> void:
 		grass_mat.set_shader_parameter("grass_texture_6", grass_sprite_tex_6)
 	if terrain_material.get_shader_parameter("vc_tex_aa") == null:
 		terrain_material.set_shader_parameter("vc_tex_aa", void_texture)
-
+	
 	# Ensure wall albedo colors are set (required because setters don't run on load with defaults)
 	terrain_material.set_shader_parameter("wall_albedo", wall_color)
 	terrain_material.set_shader_parameter("wall_albedo_2", wall_color_2)

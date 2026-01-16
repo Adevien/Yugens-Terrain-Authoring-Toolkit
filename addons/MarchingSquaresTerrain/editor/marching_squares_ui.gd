@@ -136,14 +136,19 @@ func _on_setting_changed(p_setting_name: String, p_value: Variant) -> void:
 			if p_value is String:
 				if plugin.vertex_color_idx == 0 or plugin.vertex_color_idx == 15:
 					return
-				var new_names = vp_texture_names.texture_names.duplicate()
+				var new_names = vp_texture_names.floor_texture_names.duplicate()
 				new_names[plugin.vertex_color_idx] = p_value
-				vp_texture_names.texture_names = new_names
-		"preset_selection":
-			if p_value is MarchingSquaresTerrainPreset:
-				plugin.selected_preset = p_value
+				vp_texture_names.floor_texture_names = new_names
+		"texture_preset":
+			if p_value is MarchingSquaresTexturePreset:
+				plugin.current_texture_preset = p_value
 			else:
-				plugin.selected_preset = null
+				plugin.current_texture_preset = null
+		"quick_paint_selection":
+			if p_value is MarchingSquaresQuickPaint:
+				plugin.current_quick_paint = p_value
+			else:
+				plugin.current_quick_paint = null
 
 
 func _on_terrain_setting_changed(p_setting_name: String, p_value: Variant) -> void:

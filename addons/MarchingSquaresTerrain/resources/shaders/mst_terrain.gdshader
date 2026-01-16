@@ -94,18 +94,6 @@ float noise(vec2 p) {
 	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
-float fbm(vec2 p, int octaves) {
-	float value = 0.0;
-	float amplitude = 0.5;
-	float frequency = 1.0;
-	for (int i = 0; i < octaves; i++) {
-		value += amplitude * noise(p * frequency);
-		amplitude *= 0.5;
-		frequency *= 2.0;
-	}
-	return value;
-}
-
 // Original: Get material index from vertex colors (used in vertex shader for hard edges)
 int get_material_index(vec4 vc_col_0, vec4 vc_col_1) {
 	int index = 0;
@@ -282,10 +270,10 @@ void vertex() {
 	vertex_normal = NORMAL;
 	custom1 = CUSTOM1;
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	
+
 	// Hard edges: calculate material index here (flat = no interpolation)
 	material_index = get_material_index(COLOR, CUSTOM0);
-	
+
 	// Soft blend: pass interpolated vertex colors to fragment
 	vc_color_0 = COLOR;
 	vc_color_1 = CUSTOM0;
