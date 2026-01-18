@@ -20,8 +20,6 @@ var visible: bool = false
 func _enter_tree() -> void:
 	call_deferred("_deferred_enter_tree")
 
-
-
 func _deferred_enter_tree() -> void:
 	if not Engine.is_editor_hint():
 		printerr("ERROR: [MarchingSquaresUI] attempt to load during runtime (NOT SUPPORTED)")

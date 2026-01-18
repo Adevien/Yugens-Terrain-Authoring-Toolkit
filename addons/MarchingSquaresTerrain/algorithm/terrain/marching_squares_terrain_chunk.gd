@@ -107,7 +107,6 @@ func initialize_terrain(should_regenerate_mesh: bool = true):
 		grass_planter = get_node_or_null("GrassPlanter")
 		if grass_planter:
 			grass_planter._chunk = self
-	
 	if Engine.is_editor_hint():
 		if not height_map:
 			generate_height_map()
@@ -178,7 +177,6 @@ func regenerate_mesh():
 	
 	st.generate_normals()
 	st.index()
-	
 	# Create a new mesh out of floor, and add the wall surface to it
 	mesh = st.commit()
 	

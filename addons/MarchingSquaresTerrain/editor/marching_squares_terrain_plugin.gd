@@ -64,11 +64,15 @@ var falloff : bool = true
 
 var should_mask_grass : bool = false
 
+# Flag to prevent _set_new_textures() when syncing preset from terrain node
+var _syncing_from_terrain : bool = false
+
 # Currently selected preset for vertex textures (DOES change the global terrain)
 var current_texture_preset : MarchingSquaresTexturePreset = null:
 	set(value):
 		current_texture_preset = value
-		_set_new_textures(value)
+		if not _syncing_from_terrain:
+			_set_new_textures(value)
 
 # Currently selected preset for quick painting (does NOT change the global terrain)
 var current_quick_paint : MarchingSquaresQuickPaint = null
@@ -200,6 +204,12 @@ func _edit(object: Object) -> void:
 		if ui:
 			ui.set_visible(true)
 			current_terrain_node = object
+
+			# Sync plugin's preset from the selected terrain's saved preset
+			# This ensures each terrain keeps its own preset on selection/reload
+			_syncing_from_terrain = true
+			current_texture_preset = object.current_terrain_preset
+			_syncing_from_terrain = false
 	else:
 		if ui:
 			ui.set_visible(false)

@@ -62,6 +62,7 @@ func show_tool_attributes(tool_index: int) -> void:
 	if not plugin.toolbar.toolbox:
 		return
 	
+	
 	var tool = plugin.toolbar.toolbox.tools.get(tool_index)
 	var tool_attributes : MarchingSquaresToolAttributeSettings = tool.get("attributes")
 	var type_map = {

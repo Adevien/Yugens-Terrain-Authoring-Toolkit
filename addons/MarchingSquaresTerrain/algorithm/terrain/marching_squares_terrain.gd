@@ -363,8 +363,8 @@ class_name MarchingSquaresTerrain
 var void_texture := preload("res://addons/MarchingSquaresTerrain/resources/materials/void_texture.tres")
 var placeholder_wind_texture := preload("res://addons/MarchingSquaresTerrain/resources/materials/wind_noise_texture.tres") # Change to your own texture
 
-var terrain_material : ShaderMaterial = preload("res://addons/MarchingSquaresTerrain/resources/materials/mst_terrain_shader.tres")
-var grass_mesh : QuadMesh = preload("res://addons/MarchingSquaresTerrain/resources/materials/mst_grass_mesh.tres") 
+var terrain_material : ShaderMaterial = null
+var grass_mesh : QuadMesh = null 
 
 
 var is_batch_updating : bool = false
@@ -372,23 +372,29 @@ var is_batch_updating : bool = false
 var chunks : Dictionary = {}
 
 func _init() -> void:
-	if not terrain_material:
-		terrain_material = preload("res://addons/MarchingSquaresTerrain/resources/materials/mst_terrain_shader.tres")
-	if not grass_mesh:
-		grass_mesh = preload("res://addons/MarchingSquaresTerrain/resources/materials/mst_grass_mesh.tres")
-	
+	# Create unique copies of shared resources for this node instance
+	# This prevents texture/material changes from affecting other MarchingSquaresTerrain nodes
+	terrain_material = preload("res://addons/MarchingSquaresTerrain/resources/materials/mst_terrain_shader.tres").duplicate(true)
+	var base_grass_mesh := preload("res://addons/MarchingSquaresTerrain/resources/materials/mst_grass_mesh.tres")
+	grass_mesh = base_grass_mesh.duplicate(true)
+	grass_mesh.material = base_grass_mesh.material.duplicate(true)
+
 	print_rich("Welcome to [color=MEDIUM_ORCHID][url=https://www.youtube.com/@yugen_seishin]Yūgen[/url][/color]'s [wave]Marching Squares Terrain Authoring Toolkit[/wave]\nThis plugin is under MIT license")
 
 
 func _enter_tree() -> void:
 	call_deferred("_deferred_enter_tree")
+
 	
 func _deferred_enter_tree() -> void:
 	if not Engine.is_editor_hint():
 		return
-	
-	_ensure_textures()
-	
+
+	# Apply all persisted textures/colors to this terrain's unique shader materials
+	# This is needed because _init() creates fresh duplicated materials that don't have
+	# the terrain's saved texture values - only the base resource defaults
+	force_batch_update()
+
 	chunks.clear()
 	for chunk in get_children():
 		if chunk is MarchingSquaresTerrainChunk:
@@ -399,9 +405,7 @@ func _deferred_enter_tree() -> void:
 			
 			chunk.initialize_terrain(true)
 			
-			
-
-
+		
 func has_chunk(x: int, z: int) -> bool:
 	return chunks.has(Vector2i(x, z))
 
@@ -460,7 +464,7 @@ func add_chunk(coords: Vector2i, chunk: MarchingSquaresTerrainChunk, regenerate_
 	chunk._skip_save_on_exit = false  # Reset flag when chunk is re-added (undo restores chunk)
 
 	add_child(chunk)
-	
+		
 	chunk.global_position = Vector3(
 		coords.x * ((dimensions.x - 1) * cell_size.x),
 		0,
