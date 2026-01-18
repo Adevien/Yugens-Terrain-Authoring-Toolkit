@@ -8,7 +8,7 @@
 render_priority = 1
 shader = ExtResource("1_02wel")
 shader_parameter/grass_texture = ExtResource("2_pj55m")
-shader_parameter/grass_base_color = Color(0.658312, 0.79897165, 0.97381216, 1)
+shader_parameter/grass_base_color = Color(0.65882355, 0.9394608, 0.972549, 1)
 shader_parameter/wall_threshold = 0.0
 shader_parameter/use_base_color = false
 shader_parameter/is_merge_round = true

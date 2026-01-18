@@ -6,7 +6,6 @@ class_name MarchingSquaresQuickPaint
 const TEXTURE_NAMES = preload("res://addons/MarchingSquaresTerrain/resources/texture_names.tres")
 
 @export var paint_name : String = "New Paint"
-@export var texture_preset_id : int = 0
 
 # Store values (no @export - we define them dynamically)
 var wall_texture_slot : int = 0
@@ -37,5 +36,5 @@ func _get_property_list() -> Array[Dictionary]:
 		"hint_string": ",".join(TEXTURE_NAMES.floor_texture_names),
 		"usage": PROPERTY_USAGE_DEFAULT,
 	})
-	
+
 	return properties

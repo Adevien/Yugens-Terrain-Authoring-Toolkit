@@ -382,8 +382,7 @@ func _init() -> void:
 
 func _enter_tree() -> void:
 	call_deferred("_deferred_enter_tree")
-
-
+	
 func _deferred_enter_tree() -> void:
 	if not Engine.is_editor_hint():
 		return
@@ -399,6 +398,8 @@ func _deferred_enter_tree() -> void:
 			chunk.grass_planter = null
 			
 			chunk.initialize_terrain(true)
+			
+			
 
 
 func has_chunk(x: int, z: int) -> bool:
@@ -606,6 +607,7 @@ func save_to_preset() -> void:
 	if current_terrain_preset == null:
 		push_warning("Cannot save to preset: No preset resource assigned to terrain system.")
 		return
+
 	
 	# print("Saving current terrain texture settings to preset: ", current_terrain_preset)
 	# Floor textures
@@ -663,3 +665,6 @@ func save_to_preset() -> void:
 	current_terrain_preset.new_textures.wall_colors[3] = wall_color_4
 	current_terrain_preset.new_textures.wall_colors[4] = wall_color_5
 	current_terrain_preset.new_textures.wall_colors[5] = wall_color_6
+	
+
+	

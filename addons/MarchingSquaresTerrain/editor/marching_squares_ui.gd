@@ -21,6 +21,7 @@ func _enter_tree() -> void:
 	call_deferred("_deferred_enter_tree")
 
 
+
 func _deferred_enter_tree() -> void:
 	if not Engine.is_editor_hint():
 		printerr("ERROR: [MarchingSquaresUI] attempt to load during runtime (NOT SUPPORTED)")
@@ -144,6 +145,8 @@ func _on_setting_changed(p_setting_name: String, p_value: Variant) -> void:
 				plugin.current_texture_preset = p_value
 			else:
 				plugin.current_texture_preset = null
+			# Rebuild tool attributes to refresh Quick Paint dropdown
+			tool_attributes.show_tool_attributes(active_tool)
 		"quick_paint_selection":
 			if p_value is MarchingSquaresQuickPaint:
 				plugin.current_quick_paint = p_value
