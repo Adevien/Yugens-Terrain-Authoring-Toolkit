@@ -164,10 +164,6 @@ vec4 sample_wall_by_index(int index, vec2 uv) {
 	return result;
 }
 
-// ============================================================================
-// BLENDING FUNCTIONS (for soft blend mode)
-// ============================================================================
-
 void calculate_blend_weights(vec4 vc0, vec4 vc1, float sharpness, out float weights[16]) {
 	// Calculate raw weights from vertex color products
 	float raw_weights[16];
@@ -221,7 +217,6 @@ void calculate_blend_weights(vec4 vc0, vec4 vc1, float sharpness, out float weig
 
 // Snap interpolated color to dominant channel (prevents bleeding between encodings)
 // When GPU interpolates vertex colors across triangles at floor/wall boundaries,
-// the result has multiple non-zero channels causing wrong texture bleeding.
 // This snaps back to the single dominant channel.
 vec4 snap_to_dominant(vec4 c) {
 	float max_val = max(max(c.r, c.g), max(c.b, c.a));
@@ -262,23 +257,19 @@ vec4 blend_wall_materials(vec2 uv, vec4 vc0, vec4 vc1, float sharpness) {
 	return wall_color;
 }
 
-// ============================================================================
-// VERTEX SHADER
-// ============================================================================
-
 void vertex() {
 	vertex_normal = NORMAL;
 	custom1 = CUSTOM1;
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 
-	// Hard edges: calculate material index here (flat = no interpolation)
+	// Hard edges calculate material index here (flat = no interpolation)
 	material_index = get_material_index(COLOR, CUSTOM0);
 
 	// Soft blend: pass interpolated vertex colors to fragment
 	vc_color_0 = COLOR;
 	vc_color_1 = CUSTOM0;
 
-	// CUSTOM2 contains per-cell material blend data for phantom fix (3-texture support)
+	// CUSTOM2 contains per-cell material blend data for blend with 3-texture support
 	// Encoding: R=packed(mat_a,mat_b), G=mat_c/15, B=weight_a, A=weight_b (or A>=1.5 = use vertex colors)
 	float packed_mats = CUSTOM2.r * 255.0;
 	mat_indices.x = mod(packed_mats, 16.0) / 15.0;  // mat_a (0-15 -> 0-1)
@@ -287,10 +278,6 @@ void vertex() {
 	mat_weights = vec2(CUSTOM2.b, CUSTOM2.a);  // weight_a, weight_b (interpolated for smooth blending)
 	use_vertex_colors = CUSTOM2.a >= 1.5 ? 1.0 : 0.0;  // A=2.0 signals vertex colors
 }
-
-// ============================================================================
-// FRAGMENT SHADER
-// ============================================================================
 
 void fragment() {
 	vec2 tiling_factor_floor = vec2(1.0 / float(chunk_size.x), 1.0 / float(chunk_size.z));
@@ -302,9 +289,12 @@ void fragment() {
 		vec2 floor_uv = UV2 * tiling_factor_floor;
 		vec4 floor_color;
 
-		//Hard edges mode keeps original behaviour
+		//use per-cell material to prevent provoking vertex triangule artefac at ridge boundaries
 		if (use_hard_square_edges) {
-			floor_color = sample_material_by_index(material_index, floor_uv);
+			// Use mat_indices.x (cell_mat_a) instead of vertex-based material_index
+			// floor triangles always use floor material
+			int cell_dominant_mat = int(round(mat_indices.x * 15.0));
+			floor_color = sample_material_by_index(cell_dominant_mat, floor_uv);
 		}
 		// Boundary cells: use vertex colors (respects height-adjusted colors, no cross-height bleeding)
 		else if (use_vertex_colors > 0.5) {
@@ -323,7 +313,7 @@ void fragment() {
 				}
 			}
 		}
-		// Flat cells: PHANTOM FIX using per-cell material indices (supports 3 textures)
+		// Flat cells:using per-cell material indices with supports 3 textures
 		else {
 			int mat_a = int(round(mat_indices.x * 15.0));
 			int mat_b = int(round(mat_indices.y * 15.0));
@@ -401,13 +391,18 @@ void fragment() {
 
 		vec4 wall_mat_x, wall_mat_z;
 
+		float effective_sharpness = blend_sharpness;
 		if (use_hard_square_edges) {
-			// Hard edges: single material based on vertex material_index
-			wall_mat_x = sample_wall_by_index(material_index, uv_x);
-			wall_mat_z = sample_wall_by_index(material_index, uv_z);
+			// Hard edges - Original calculations (issue: creates weird triangules at ridges)
+			//wall_mat_x = sample_wall_by_index(material_index, uv_x);
+			//wall_mat_z = sample_wall_by_index(material_index, uv_z);
+
+			//New attempt (like blend mode) (solves triangules at ridges, but introduce it at the borders)
+			wall_mat_x = blend_wall_materials(uv_x, vc_color_0, vc_color_1, effective_sharpness);
+			wall_mat_z = blend_wall_materials(uv_z, vc_color_0, vc_color_1, effective_sharpness);
 		} else {
 			// Soft blend: blend wall materials based on vertex colors
-			float effective_sharpness = blend_sharpness;
+			effective_sharpness = blend_sharpness;
 			if (blend_noise_strength > 0.0) {
 				float n = noise(world_pos.xz * blend_noise_scale);
 				effective_sharpness = mix(blend_sharpness, blend_sharpness * (0.5 + n), blend_noise_strength);

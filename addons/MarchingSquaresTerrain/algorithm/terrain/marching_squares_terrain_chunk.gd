@@ -82,7 +82,7 @@ var cell_wall_upper_color_0 : Color
 var cell_wall_lower_color_1 : Color
 var cell_wall_upper_color_1 : Color
 var cell_is_boundary : bool = false
-# Per-cell materials for phantom fix (computed once per cell, supports up to 3 textures)
+# Per-cell materials for to supports up to 3 textures
 var cell_mat_a : int = 0
 var cell_mat_b : int = 0
 var cell_mat_c : int = 0
@@ -158,8 +158,8 @@ func regenerate_mesh():
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
 	st.set_custom_format(1, SurfaceTool.CUSTOM_RGBA_FLOAT)
-	st.set_custom_format(2, SurfaceTool.CUSTOM_RGBA_FLOAT)  # PHANTOM FIX: mat_indices + blend_weight
-	
+	st.set_custom_format(2, SurfaceTool.CUSTOM_RGBA_FLOAT)  
+
 	var start_time: int = Time.get_ticks_msec()
 	
 	if not find_child("GrassPlanter"):
@@ -264,7 +264,7 @@ func generate_terrain_cells():
 			# Determine if this is a boundary cell (significant height variation)
 			cell_is_boundary = (cell_max_height - cell_min_height) > merge_threshold
 			
-			# Calculate the 2 dominant textures for this cell ONCE (phantom fix)
+			# Calculate the 2 dominant textures for this cell
 			calculate_cell_material_pair(color_map_0, color_map_1)
 			
 			if cell_is_boundary:
@@ -673,9 +673,13 @@ func add_point(x: float, y: float, z: float, uv_x: float = 0, uv_y: float = 0, d
 	var is_ridge := false
 	if floor_mode and terrain_system.use_ridge_texture:
 		is_ridge = (uv.y > 1.0 - terrain_system.ridge_threshold)
-	
+
 	# Wall vertices AND ridge vertices use wall_color_map_0/1
+	# In hard edge mode, non-ridge floor vertices use floor colors
+	# Ridge vertices MUST keep wall colors for correct wall texture display
 	var use_wall_colors := (not floor_mode) or is_ridge
+	if terrain_system.use_hard_textures and floor_mode and not is_ridge:
+		use_wall_colors = false  # Only force floor colors for non-ridge floor vertices
 	var source_map_0 : PackedColorArray = wall_color_map_0 if use_wall_colors else color_map_0
 	var source_map_1 : PackedColorArray = wall_color_map_1 if use_wall_colors else color_map_1
 	
@@ -685,32 +689,41 @@ func add_point(x: float, y: float, z: float, uv_x: float = 0, uv_y: float = 0, d
 		color_0 = Color(1.0, 0.0, 0.0, 0.0)
 		source_map_0[cell_coords.y*dimensions.x + cell_coords.x] = Color(1.0, 0.0, 0.0, 0.0)
 	elif diag_midpoint:
-		var ad_color = lerp(source_map_0[cell_coords.y*dimensions.x + cell_coords.x], source_map_0[(cell_coords.y + 1)*dimensions.x + cell_coords.x + 1], 0.5)
-		var bc_color = lerp(source_map_0[cell_coords.y*dimensions.x + cell_coords.x + 1], source_map_0[(cell_coords.y + 1)*dimensions.x + cell_coords.x], 0.5)
-		color_0 = Color(min(ad_color.r, bc_color.r), min(ad_color.g, bc_color.g), min(ad_color.b, bc_color.b), min(ad_color.a, bc_color.a))
-		if ad_color.r > 0.99 or bc_color.r > 0.99: color_0.r = 1.0;
-		if ad_color.g > 0.99 or bc_color.g > 0.99: color_0.g = 1.0;
-		if ad_color.b > 0.99 or bc_color.b > 0.99: color_0.b = 1.0;
-		if ad_color.a > 0.99 or bc_color.a > 0.99: color_0.a = 1.0;
-	elif cell_is_boundary:
-		# HEIGHT-BASED SAMPLING for ALL vertices in boundary cells
-		# This prevents color bleeding between different height levels
-		var height_range = cell_max_height - cell_min_height
-		var height_factor = clamp((y - cell_min_height) / height_range, 0.0, 1.0)
-		
-		# Select appropriate color set based on vertex type (floor vs wall/ridge)
-		var lower_0: Color = cell_wall_lower_color_0 if use_wall_colors else cell_floor_lower_color_0
-		var upper_0: Color = cell_wall_upper_color_0 if use_wall_colors else cell_floor_upper_color_0
-		
-		# Sharp bands: < 0.3 = lower color, > 0.7 = upper color, middle = blend
-		if height_factor < lower_thresh:
-			color_0 = lower_0
-		elif height_factor > upper_thresh:
-			color_0 = upper_0
+		if terrain_system.use_hard_textures:
+			# Hard edge mode uses same color as cell's top-left corner
+			color_0 = source_map_0[cell_coords.y * dimensions.x + cell_coords.x]
 		else:
-			var blend_factor = (height_factor - lower_thresh) / blend_zone
-			color_0 = lerp(lower_0, upper_0, blend_factor)
-		color_0 = get_dominant_color(color_0)
+			# Smooth blend mode welerp diagonal corners for smoother effect
+			var ad_color = lerp(source_map_0[cell_coords.y*dimensions.x + cell_coords.x], source_map_0[(cell_coords.y + 1)*dimensions.x + cell_coords.x + 1], 0.5)
+			var bc_color = lerp(source_map_0[cell_coords.y*dimensions.x + cell_coords.x + 1], source_map_0[(cell_coords.y + 1)*dimensions.x + cell_coords.x], 0.5)
+			color_0 = Color(min(ad_color.r, bc_color.r), min(ad_color.g, bc_color.g), min(ad_color.b, bc_color.b), min(ad_color.a, bc_color.a))
+			if ad_color.r > 0.99 or bc_color.r > 0.99: color_0.r = 1.0;
+			if ad_color.g > 0.99 or bc_color.g > 0.99: color_0.g = 1.0;
+			if ad_color.b > 0.99 or bc_color.b > 0.99: color_0.b = 1.0;
+			if ad_color.a > 0.99 or bc_color.a > 0.99: color_0.a = 1.0;
+	elif cell_is_boundary:
+		if terrain_system.use_hard_textures:
+			#use cell's corner color
+			color_0 = source_map_0[cell_coords.y * dimensions.x + cell_coords.x]
+		else:
+			# HEIGHT-BASED SAMPLING for smooth blend mode
+			# This prevents color bleeding between different height levels
+			var height_range = cell_max_height - cell_min_height
+			var height_factor = clamp((y - cell_min_height) / height_range, 0.0, 1.0)
+
+			# Select appropriate color set based on vertex type (floor vs wall/ridge)
+			var lower_0: Color = cell_wall_lower_color_0 if use_wall_colors else cell_floor_lower_color_0
+			var upper_0: Color = cell_wall_upper_color_0 if use_wall_colors else cell_floor_upper_color_0
+
+			# Sharp bands: < 0.3 = lower color, > 0.7 = upper color, middle = blend
+			if height_factor < lower_thresh:
+				color_0 = lower_0
+			elif height_factor > upper_thresh:
+				color_0 = upper_0
+			else:
+				var blend_factor = (height_factor - lower_thresh) / blend_zone
+				color_0 = lerp(lower_0, upper_0, blend_factor)
+			color_0 = get_dominant_color(color_0)
 	else:
 		var ab_color = lerp(source_map_0[cell_coords.y*dimensions.x + cell_coords.x], source_map_0[cell_coords.y*dimensions.x + cell_coords.x + 1], x)
 		var cd_color = lerp(source_map_0[(cell_coords.y + 1)*dimensions.x + cell_coords.x], source_map_0[(cell_coords.y + 1)*dimensions.x + cell_coords.x + 1], x)
@@ -725,32 +738,36 @@ func add_point(x: float, y: float, z: float, uv_x: float = 0, uv_y: float = 0, d
 		color_1 = Color(1.0, 0.0, 0.0, 0.0)
 		source_map_1[cell_coords.y*dimensions.x + cell_coords.x] = Color(1.0, 0.0, 0.0, 0.0)
 	elif diag_midpoint:
-		var ad_color = lerp(source_map_1[cell_coords.y*dimensions.x + cell_coords.x], source_map_1[(cell_coords.y + 1)*dimensions.x + cell_coords.x + 1], 0.5)
-		var bc_color = lerp(source_map_1[cell_coords.y*dimensions.x + cell_coords.x + 1], source_map_1[(cell_coords.y + 1)*dimensions.x + cell_coords.x], 0.5)
-		color_1 = Color(min(ad_color.r, bc_color.r), min(ad_color.g, bc_color.g), min(ad_color.b, bc_color.b), min(ad_color.a, bc_color.a))
-		if ad_color.r > 0.99 or bc_color.r > 0.99: color_1.r = 1.0;
-		if ad_color.g > 0.99 or bc_color.g > 0.99: color_1.g = 1.0;
-		if ad_color.b > 0.99 or bc_color.b > 0.99: color_1.b = 1.0;
-		if ad_color.a > 0.99 or bc_color.a > 0.99: color_1.a = 1.0;
-	elif cell_is_boundary:
-		# HEIGHT-BASED SAMPLING for ALL vertices in boundary cells
-		# This prevents color bleeding between different height levels
-		var height_range = cell_max_height - cell_min_height
-		var height_factor = clamp((y - cell_min_height) / height_range, 0.0, 1.0)
-		
-		# Select appropriate color set based on vertex type (floor vs wall/ridge)
-		var lower_1: Color = cell_wall_lower_color_1 if use_wall_colors else cell_floor_lower_color_1
-		var upper_1: Color = cell_wall_upper_color_1 if use_wall_colors else cell_floor_upper_color_1
-		
-		# Sharp bands: < 0.3 = lower color, > 0.7 = upper color, middle = blend
-		if height_factor < 0.3:
-			color_1 = lower_1
-		elif height_factor > 0.7:
-			color_1 = upper_1
+		if terrain_system.use_hard_textures:
+			# Hard edge - again same... vertex uses same color as cell's top-left corner
+			color_1 = source_map_1[cell_coords.y * dimensions.x + cell_coords.x]
 		else:
-			var blend_factor = (height_factor - 0.3) / 0.4
-			color_1 = lerp(lower_1, upper_1, blend_factor)
-		color_1 = get_dominant_color(color_1)
+			# Smooth blend mode - keep the blend we had
+			var ad_color = lerp(source_map_1[cell_coords.y*dimensions.x + cell_coords.x], source_map_1[(cell_coords.y + 1)*dimensions.x + cell_coords.x + 1], 0.5)
+			var bc_color = lerp(source_map_1[cell_coords.y*dimensions.x + cell_coords.x + 1], source_map_1[(cell_coords.y + 1)*dimensions.x + cell_coords.x], 0.5)
+			color_1 = Color(min(ad_color.r, bc_color.r), min(ad_color.g, bc_color.g), min(ad_color.b, bc_color.b), min(ad_color.a, bc_color.a))
+			if ad_color.r > 0.99 or bc_color.r > 0.99: color_1.r = 1.0;
+			if ad_color.g > 0.99 or bc_color.g > 0.99: color_1.g = 1.0;
+			if ad_color.b > 0.99 or bc_color.b > 0.99: color_1.b = 1.0;
+			if ad_color.a > 0.99 or bc_color.a > 0.99: color_1.a = 1.0;
+	elif cell_is_boundary:
+		if terrain_system.use_hard_textures:
+			color_1 = source_map_1[cell_coords.y * dimensions.x + cell_coords.x]
+		else:
+			var height_range = cell_max_height - cell_min_height
+			var height_factor = clamp((y - cell_min_height) / height_range, 0.0, 1.0)
+
+			var lower_1: Color = cell_wall_lower_color_1 if use_wall_colors else cell_floor_lower_color_1
+			var upper_1: Color = cell_wall_upper_color_1 if use_wall_colors else cell_floor_upper_color_1
+
+			if height_factor < 0.3:
+				color_1 = lower_1
+			elif height_factor > 0.7:
+				color_1 = upper_1
+			else:
+				var blend_factor = (height_factor - 0.3) / 0.4
+				color_1 = lerp(lower_1, upper_1, blend_factor)
+			color_1 = get_dominant_color(color_1)
 	else:
 		var ab_color = lerp(source_map_1[cell_coords.y*dimensions.x + cell_coords.x], source_map_1[cell_coords.y*dimensions.x + cell_coords.x + 1], x)
 		var cd_color = lerp(source_map_1[(cell_coords.y + 1)*dimensions.x + cell_coords.x], source_map_1[(cell_coords.y + 1)*dimensions.x + cell_coords.x + 1], x)
@@ -825,7 +842,7 @@ func get_dominant_color(c: Color) -> Color:
 	return new_color
 
 
-# Convert vertex color pair to texture index (0-15) - PHANTOM FIX
+# Convert vertex color pair to texture index
 func get_texture_index_from_colors(c0: Color, c1: Color) -> int:
 	var c0_idx : int = 0
 	var c0_max : float = c0.r
@@ -842,7 +859,7 @@ func get_texture_index_from_colors(c0: Color, c1: Color) -> int:
 	return c0_idx * 4 + c1_idx
 
 
-# Convert texture index (0-15) back to color pair - PHANTOM FIX
+# Convert texture index (0-15) back to color pair 
 func texture_index_to_colors(idx: int) -> Array[Color]:
 	var c0_channel : int = idx / 4
 	var c1_channel : int = idx % 4
@@ -861,7 +878,7 @@ func texture_index_to_colors(idx: int) -> Array[Color]:
 	return [c0, c1]
 
 
-# Calculate 2 dominant textures for current cell (prevents phantom textures) - PHANTOM FIX
+## Calculate 2 dominant textures for current cell 
 func calculate_cell_material_pair(source_map_0: PackedColorArray, source_map_1: PackedColorArray) -> void:
 	var tex_a : int = get_texture_index_from_colors(
 		source_map_0[cell_coords.y * dimensions.x + cell_coords.x],
@@ -890,12 +907,12 @@ func calculate_cell_material_pair(source_map_0: PackedColorArray, source_map_1: 
 	cell_mat_c = sorted_textures[2] if sorted_textures.size() > 2 else cell_mat_b
 
 
-# Calculate CUSTOM2 blend data for PHANTOM FIX (3-texture support)
+# Calculate CUSTOM2 blend data with 3 texture support 
 # Encoding: Color(packed_mats, mat_c/15, weight_a, weight_b)
-#   - R: (mat_a + mat_b * 16) / 255.0  (packs 2 indices, each 0-15)
-#   - G: mat_c / 15.0
-#   - B: weight_a (0.0 to 1.0)
-#   - A: weight_b (0.0 to 1.0), or 2.0 to signal use_vertex_colors
+# R: (mat_a + mat_b * 16) / 255.0  (packs 2 indices, each 0-15)
+# G: mat_c / 15.0
+# B: weight_a (0.0 to 1.0)
+# A: weight_b (0.0 to 1.0), or 2.0 to signal use_vertex_colors
 func calculate_material_blend_data(vert_x: float, vert_z: float, source_map_0: PackedColorArray, source_map_1: PackedColorArray) -> Color:
 	var tex_a : int = get_texture_index_from_colors(
 		source_map_0[cell_coords.y * dimensions.x + cell_coords.x],
