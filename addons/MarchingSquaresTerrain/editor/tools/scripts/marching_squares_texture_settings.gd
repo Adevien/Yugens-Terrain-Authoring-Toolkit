@@ -10,75 +10,81 @@ var plugin : MarchingSquaresTerrainPlugin
 const VAR_NAMES : Array[Dictionary] = [
 	{
 		"tex_var": "ground_texture",
+		"scale_var": "texture_scale_1",
 		"sprite_var": "grass_sprite",
 		"color_var": "ground_color",
 	},
 	{
 		"tex_var": "texture_2",
+		"scale_var": "texture_scale_2",
 		"sprite_var": "grass_sprite_tex_2",
 		"color_var": "ground_color_2",
 		"use_grass_var": "tex2_has_grass",
 	},
 	{
 		"tex_var": "texture_3",
+		"scale_var": "texture_scale_3",
 		"sprite_var": "grass_sprite_tex_3",
 		"color_var": "ground_color_3",
 		"use_grass_var": "tex3_has_grass",
 	},
 	{
 		"tex_var": "texture_4",
+		"scale_var": "texture_scale_4",
 		"sprite_var": "grass_sprite_tex_4",
 		"color_var": "ground_color_4",
 		"use_grass_var": "tex4_has_grass",
 	},
 	{
 		"tex_var": "texture_5",
+		"scale_var": "texture_scale_5",
 		"sprite_var": "grass_sprite_tex_5",
 		"color_var": "ground_color_5",
 		"use_grass_var": "tex5_has_grass",
 	},
 	{
 		"tex_var": "texture_6",
+		"scale_var": "texture_scale_6",
 		"sprite_var": "grass_sprite_tex_6",
 		"color_var": "ground_color_6",
 		"use_grass_var": "tex6_has_grass",
 	},
 	{
 		"tex_var": "texture_7",
+		"scale_var": "texture_scale_7",
 	},
 	{
 		"tex_var": "texture_8",
+		"scale_var": "texture_scale_8",
 	},
 	{
 		"tex_var": "texture_9",
+		"scale_var": "texture_scale_9",
 	},
 	{
 		"tex_var": "texture_10",
+		"scale_var": "texture_scale_10",
 	},
 	{
 		"tex_var": "texture_11",
+		"scale_var": "texture_scale_11",
 	},
 	{
 		"tex_var": "texture_12",
+		"scale_var": "texture_scale_12",
 	},
 	{
 		"tex_var": "texture_13",
+		"scale_var": "texture_scale_13",
 	},
 	{
 		"tex_var": "texture_14",
+		"scale_var": "texture_scale_14",
 	},
 	{
 		"tex_var": "texture_15",
+		"scale_var": "texture_scale_15",
 	},
-]
-
-const WALL_VAR_NAMES : Array[Dictionary] = [
-	{ "tex_var": "wall_texture", "color_var": "wall_color" },
-	{ "tex_var": "wall_texture_2", "color_var": "wall_color_2" },
-	{ "tex_var": "wall_texture_3", "color_var": "wall_color_3" },
-	{ "tex_var": "wall_texture_4", "color_var": "wall_color_4" },
-	{ "tex_var": "wall_texture_5", "color_var": "wall_color_5" },
-	{ "tex_var": "wall_texture_6", "color_var": "wall_color_6" },
 ]
 
 
@@ -127,7 +133,41 @@ func add_texture_settings() -> void:
 		editor_r_picker.set_custom_minimum_size(Vector2(100, 25))
 		
 		vbox.add_child(editor_r_picker, true)
-		
+
+		# Add scale slider for each texture
+		if VAR_NAMES[i].has("scale_var"):
+			var scale_var_name : String = VAR_NAMES[i].get("scale_var")
+			var scale_value : float = terrain.get(scale_var_name) if terrain.get(scale_var_name) else 1.0
+
+			var scale_hbox := HBoxContainer.new()
+			scale_hbox.set_custom_minimum_size(Vector2(150, 20))
+
+			var scale_label := Label.new()
+			scale_label.text = "Scale:"
+			scale_label.set_custom_minimum_size(Vector2(40, 20))
+			scale_hbox.add_child(scale_label)
+
+			var scale_slider := HSlider.new()
+			scale_slider.min_value = 0.1
+			scale_slider.max_value = 40.0
+			scale_slider.step = 0.1
+			scale_slider.value = scale_value
+			scale_slider.set_custom_minimum_size(Vector2(80, 20))
+			scale_slider.value_changed.connect(
+				func(val): _on_texture_setting_changed(scale_var_name, val)
+			)
+			scale_hbox.add_child(scale_slider)
+
+			var scale_value_label := Label.new()
+			scale_value_label.text = str(scale_value)
+			scale_value_label.set_custom_minimum_size(Vector2(25, 20))
+			scale_slider.value_changed.connect(
+				func(val): scale_value_label.text = str(snapped(val, 0.1))
+			)
+			scale_hbox.add_child(scale_value_label)
+
+			vbox.add_child(scale_hbox, true)
+
 		if i <= 5:
 			# Add the grass instance sprite
 			sprite_var = terrain.get(VAR_NAMES[i].get("sprite_var"))
@@ -172,54 +212,7 @@ func add_texture_settings() -> void:
 		
 		if i <= 5:
 			vbox.add_child(HSeparator.new())
-	
-	# Wall Textures Section Header
-	var wall_header := Label.new()
-	wall_header.set_text("=== WALL TEXTURES ===")
-	wall_header.set_horizontal_alignment(HORIZONTAL_ALIGNMENT_CENTER)
-	vbox.add_child(wall_header)
-	vbox.add_child(HSeparator.new())
-	
-	# Wall textures loop (6 slots)
-	for i in range(6):
-		var label := Label.new()
-		label.set_text("Wall " + str(i+1))
-		label.set_vertical_alignment(VERTICAL_ALIGNMENT_CENTER)
-		label.set_custom_minimum_size(Vector2(50, 15))
-		var c_cont := CenterContainer.new()
-		c_cont.set_custom_minimum_size(Vector2(50, 25))
-		c_cont.add_child(label, true)
-		vbox.add_child(c_cont, true)
-		
-		# Wall texture picker
-		var wall_tex : Texture2D = terrain.get(WALL_VAR_NAMES[i].get("tex_var"))
-		# Skip empty/abstract Texture2D objects
-		if wall_tex != null and wall_tex.get_class() == "Texture2D":
-			wall_tex = null
-		var editor_r_picker := EditorResourcePicker.new()
-		editor_r_picker.set_base_type("Texture2D")
-		editor_r_picker.edited_resource = wall_tex
-		editor_r_picker.resource_changed.connect(
-			func(resource): _on_texture_setting_changed(WALL_VAR_NAMES[i].get("tex_var"), resource)
-		)
-		editor_r_picker.set_custom_minimum_size(Vector2(100, 25))
-		vbox.add_child(editor_r_picker, true)
-		
-		# Wall color picker
-		var wall_color : Color = terrain.get(WALL_VAR_NAMES[i].get("color_var"))
-		var c_pick_button := ColorPickerButton.new()
-		c_pick_button.color = wall_color
-		c_pick_button.color_changed.connect(
-			func(color): _on_texture_setting_changed(WALL_VAR_NAMES[i].get("color_var"), color)
-		)
-		c_pick_button.set_custom_minimum_size(Vector2(150, 25))
-		var c_cont_2 := CenterContainer.new()
-		c_cont_2.set_custom_minimum_size(Vector2(150, 25))
-		c_cont_2.add_child(c_pick_button, true)
-		vbox.add_child(c_cont_2, true)
-		
-		vbox.add_child(HSeparator.new())
-	
+
 	vbox.add_child(VSeparator.new(), true)
 	var export_button = MarchingSquaresTexturePresetExporter.new()
 	vbox.add_child(export_button, true)

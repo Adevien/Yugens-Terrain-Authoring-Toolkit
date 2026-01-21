@@ -18,6 +18,7 @@ class_name MarchingSquaresToolAttributeSettings
 # Vertex painting-related special attributes
 @export var texture_preset : bool = false
 @export var quick_paint_selection : bool = false
+@export var paint_walls : bool = false
 
 # Non-brush attributes
 @export var chunk_management : bool = false

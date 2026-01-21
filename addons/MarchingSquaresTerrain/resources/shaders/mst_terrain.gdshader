@@ -4,6 +4,7 @@ render_mode diffuse_toon, depth_draw_always;
 group_uniforms Albedo;
 uniform float wall_threshold : hint_range(0.0, 0.5) = 0.0;
 uniform ivec3 chunk_size = ivec3(33, 32, 33);
+uniform vec2 cell_size = vec2(2.0, 2.0);
 uniform vec4 ground_albedo : source_color = vec4(0.392, 0.471, 0.318, 1.0);
 uniform vec4 ground_albedo_2 : source_color = vec4(0.322, 0.482, 0.384, 1.0);
 uniform vec4 ground_albedo_3 : source_color = vec4(0.373, 0.424, 0.294, 1.0);
@@ -36,6 +37,24 @@ uniform float blend_noise_scale : hint_range(0.0, 50.0, 1.0) = 10.0;
 uniform float blend_noise_strength : hint_range(0.0, 1.0, 0.05) = 0.0;
 group_uniforms;
 
+group_uniforms Texture_Scales;
+uniform float texture_scale_1 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_2 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_3 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_4 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_5 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_6 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_7 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_8 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_9 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_10 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_11 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_12 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_13 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_14 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_15 : hint_range(0.1, 20.0, 0.1) = 1.0;
+uniform float texture_scale_16 : hint_range(0.1, 20.0, 0.1) = 1.0;
+group_uniforms;
 
 group_uniforms Vertex_Colors;
 uniform sampler2D vc_tex_rr : source_color, filter_nearest;
@@ -124,8 +143,33 @@ int get_material_index(vec4 vc_col_0, vec4 vc_col_1) {
 	return index;
 }
 
-// Sample material by index with albedo tints applied
-vec4 sample_material_by_index(int index, vec2 uv) {
+// Get per-texture UV scale
+float get_texture_scale(int index) {
+	switch(index) {
+		case 0: return texture_scale_1;
+		case 1: return texture_scale_2;
+		case 2: return texture_scale_3;
+		case 3: return texture_scale_4;
+		case 4: return texture_scale_5;
+		case 5: return texture_scale_6;
+		case 6: return texture_scale_7;
+		case 7: return texture_scale_8;
+		case 8: return texture_scale_9;
+		case 9: return texture_scale_10;
+		case 10: return texture_scale_11;
+		case 11: return texture_scale_12;
+		case 12: return texture_scale_13;
+		case 13: return texture_scale_14;
+		case 14: return texture_scale_15;
+		case 15: return texture_scale_16;
+		default: return 1.0;
+	}
+}
+
+// Sample material by index with albedo tints and per-texture scaling applied
+vec4 sample_material_by_index(int index, vec2 base_uv) {
+	float scale = get_texture_scale(index);
+	vec2 uv = base_uv * scale;
 	vec4 result;
 	switch(index) {
 		case 0: result = texture(vc_tex_rr, uv) * ground_albedo; break;
@@ -149,19 +193,10 @@ vec4 sample_material_by_index(int index, vec2 uv) {
 	return result;
 }
 
-// Sample wall material by index (for hard edges mode and soft blend mode)
+// Sample wall material by index - uses unified texture pool (same as ground)
+// Walls now use the same 16 textures as floors via sample_material_by_index()
 vec4 sample_wall_by_index(int index, vec2 uv) {
-	vec4 result;
-	switch(clamp(index, 0, 5)) {
-		case 0: result = texture(wall_tex_1, uv) * wall_albedo; break;
-		case 1: result = texture(wall_tex_2, uv) * wall_albedo_2; break;
-		case 2: result = texture(wall_tex_3, uv) * wall_albedo_3; break;
-		case 3: result = texture(wall_tex_4, uv) * wall_albedo_4; break;
-		case 4: result = texture(wall_tex_5, uv) * wall_albedo_5; break;
-		case 5: result = texture(wall_tex_6, uv) * wall_albedo_6; break;
-		default: result = texture(wall_tex_1, uv) * wall_albedo; break;
-	}
-	return result;
+	return sample_material_by_index(index, uv);
 }
 
 void calculate_blend_weights(vec4 vc0, vec4 vc1, float sharpness, out float weights[16]) {
@@ -230,6 +265,7 @@ vec4 snap_to_dominant(vec4 c) {
 }
 
 // Blend wall materials using vertex color weights (for soft blend mode)
+// Now uses all 16 textures from the unified texture pool
 vec4 blend_wall_materials(vec2 uv, vec4 vc0, vec4 vc1, float sharpness) {
 	// Snap interpolated colors to dominant channels to prevent bleeding
 	// between floor and wall texture encodings at triangle boundaries
@@ -239,14 +275,13 @@ vec4 blend_wall_materials(vec2 uv, vec4 vc0, vec4 vc1, float sharpness) {
 	float weights[16];
 	calculate_blend_weights(snapped_vc0, snapped_vc1, sharpness, weights);
 
-	// Map 16 ground slots to 6 wall slots (clamp to 0-5)
 	vec4 wall_color = vec4(0.0);
 	float total_weight = 0.0;
 
 	for (int i = 0; i < 16; i++) {
 		if (weights[i] > 0.01) {
-			int wall_idx = clamp(i, 0, 5);  // Map to wall slots 0-5
-			wall_color += sample_wall_by_index(wall_idx, uv) * weights[i];
+			// Use full 0-15 range - walls now use unified texture pool
+			wall_color += sample_wall_by_index(i, uv) * weights[i];
 			total_weight += weights[i];
 		}
 	}
@@ -386,8 +421,10 @@ void fragment() {
 		vec3 tri_weights = vec3(abs_normal.x, 0.0, abs_normal.z);
 		tri_weights /= (tri_weights.x + tri_weights.z);
 
-		vec2 uv_x = vertex_pos.zy * tiling_factor_wall * 2.0;
-		vec2 uv_z = vertex_pos.xy * tiling_factor_wall * 2.0;
+		// Divide by cell_size to match floor UV coordinate system
+		// Floor UV2 = vert.xz / cell_size, so walls need the same normalization
+		vec2 uv_x = (vertex_pos.zy / cell_size.yx) * tiling_factor_wall;
+		vec2 uv_z = (vertex_pos.xy / cell_size) * tiling_factor_wall;
 
 		vec4 wall_mat_x, wall_mat_z;
 

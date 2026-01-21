@@ -153,6 +153,9 @@ func _on_setting_changed(p_setting_name: String, p_value: Variant) -> void:
 				plugin.current_quick_paint = p_value
 			else:
 				plugin.current_quick_paint = null
+		"paint_walls":
+			if p_value is bool:
+				plugin.paint_walls_mode = p_value
 
 
 func _on_terrain_setting_changed(p_setting_name: String, p_value: Variant) -> void:
@@ -301,41 +304,51 @@ func _on_texture_setting_changed(p_setting_name: String, p_value: Variant) -> vo
 		"texture_15":
 			if p_value is Texture2D or p_value == null:
 				terrain.texture_15 = p_value
-		"wall_texture":
-			if p_value is Texture2D or p_value == null:
-				terrain.wall_texture = p_value
-		"wall_texture_2":
-			if p_value is Texture2D or p_value == null:
-				terrain.wall_texture_2 = p_value
-		"wall_texture_3":
-			if p_value is Texture2D or p_value == null:
-				terrain.wall_texture_3 = p_value
-		"wall_texture_4":
-			if p_value is Texture2D or p_value == null:
-				terrain.wall_texture_4 = p_value
-		"wall_texture_5":
-			if p_value is Texture2D or p_value == null:
-				terrain.wall_texture_5 = p_value
-		"wall_texture_6":
-			if p_value is Texture2D or p_value == null:
-				terrain.wall_texture_6 = p_value
-		"wall_color":
-			if p_value is Color:
-				terrain.wall_color = p_value
-		"wall_color_2":
-			if p_value is Color:
-				terrain.wall_color_2 = p_value
-		"wall_color_3":
-			if p_value is Color:
-				terrain.wall_color_3 = p_value
-		"wall_color_4":
-			if p_value is Color:
-				terrain.wall_color_4 = p_value
-		"wall_color_5":
-			if p_value is Color:
-				terrain.wall_color_5 = p_value
-		"wall_color_6":
-			if p_value is Color:
-				terrain.wall_color_6 = p_value
-	
+		# Per-texture UV scale handlers
+		"texture_scale_1":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_1 = float(p_value)
+		"texture_scale_2":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_2 = float(p_value)
+		"texture_scale_3":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_3 = float(p_value)
+		"texture_scale_4":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_4 = float(p_value)
+		"texture_scale_5":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_5 = float(p_value)
+		"texture_scale_6":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_6 = float(p_value)
+		"texture_scale_7":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_7 = float(p_value)
+		"texture_scale_8":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_8 = float(p_value)
+		"texture_scale_9":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_9 = float(p_value)
+		"texture_scale_10":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_10 = float(p_value)
+		"texture_scale_11":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_11 = float(p_value)
+		"texture_scale_12":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_12 = float(p_value)
+		"texture_scale_13":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_13 = float(p_value)
+		"texture_scale_14":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_14 = float(p_value)
+		"texture_scale_15":
+			if p_value is float or p_value is int:
+				terrain.texture_scale_15 = float(p_value)
+
 	terrain.save_to_preset()

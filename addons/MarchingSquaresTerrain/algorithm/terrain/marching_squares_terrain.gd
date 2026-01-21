@@ -8,7 +8,10 @@ class_name MarchingSquaresTerrain
 	set(value):
 		dimensions = value
 		terrain_material.set_shader_parameter("chunk_size", value)
-@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var cell_size : Vector2 = Vector2(2, 2) # XZ Unit size of each cell
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var cell_size : Vector2 = Vector2(2, 2): # XZ Unit size of each cell
+	set(value):
+		cell_size = value
+		terrain_material.set_shader_parameter("cell_size", value)
 @export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var use_hard_textures : bool = false:
 	set(value):
 		use_hard_textures = value
@@ -364,6 +367,88 @@ class_name MarchingSquaresTerrain
 			var grass_mat := grass_mesh.material as ShaderMaterial
 			grass_mat.set_shader_parameter("grass_color_6", value)
 
+# Per-texture UV scaling (applied in shader)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_1 : float = 1.0:
+	set(value):
+		texture_scale_1 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_1", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_2 : float = 1.0:
+	set(value):
+		texture_scale_2 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_2", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_3 : float = 1.0:
+	set(value):
+		texture_scale_3 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_3", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_4 : float = 1.0:
+	set(value):
+		texture_scale_4 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_4", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_5 : float = 1.0:
+	set(value):
+		texture_scale_5 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_5", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_6 : float = 1.0:
+	set(value):
+		texture_scale_6 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_6", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_7 : float = 1.0:
+	set(value):
+		texture_scale_7 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_7", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_8 : float = 1.0:
+	set(value):
+		texture_scale_8 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_8", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_9 : float = 1.0:
+	set(value):
+		texture_scale_9 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_9", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_10 : float = 1.0:
+	set(value):
+		texture_scale_10 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_10", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_11 : float = 1.0:
+	set(value):
+		texture_scale_11 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_11", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_12 : float = 1.0:
+	set(value):
+		texture_scale_12 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_12", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_13 : float = 1.0:
+	set(value):
+		texture_scale_13 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_13", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_14 : float = 1.0:
+	set(value):
+		texture_scale_14 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_14", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_15 : float = 1.0:
+	set(value):
+		texture_scale_15 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_15", value)
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE) var texture_scale_16 : float = 1.0:
+	set(value):
+		texture_scale_16 = value
+		if not is_batch_updating:
+			terrain_material.set_shader_parameter("texture_scale_16", value)
+
 @export_storage var current_terrain_preset: MarchingSquaresTexturePreset = null
 
 var void_texture := preload("res://addons/MarchingSquaresTerrain/resources/plugin materials/void_texture.tres")
@@ -536,7 +621,10 @@ func _ensure_textures() -> void:
 # Call this after setting is_batch_updating = true and changing properties
 func force_batch_update() -> void:
 	var grass_mat := grass_mesh.material as ShaderMaterial
-	
+
+	# TERRAIN MATERIAL - Core parameters
+	terrain_material.set_shader_parameter("cell_size", cell_size)
+
 	# TERRAIN MATERIAL - Ground TExtures
 	terrain_material.set_shader_parameter("vc_tex_rr", ground_texture)
 	terrain_material.set_shader_parameter("vc_tex_rg", texture_2)
@@ -570,14 +658,32 @@ func force_batch_update() -> void:
 	terrain_material.set_shader_parameter("ground_albedo_5", ground_color_5)
 	terrain_material.set_shader_parameter("ground_albedo_6", ground_color_6)
 	
-	# TERRAIN MATERIAL - Wall Colors 
+	# TERRAIN MATERIAL - Wall Colors
 	terrain_material.set_shader_parameter("wall_albedo", wall_color)
 	terrain_material.set_shader_parameter("wall_albedo_2", wall_color_2)
 	terrain_material.set_shader_parameter("wall_albedo_3", wall_color_3)
 	terrain_material.set_shader_parameter("wall_albedo_4", wall_color_4)
 	terrain_material.set_shader_parameter("wall_albedo_5", wall_color_5)
 	terrain_material.set_shader_parameter("wall_albedo_6", wall_color_6)
-	
+
+	# TERRAIN MATERIAL - Per-Texture UV Scales
+	terrain_material.set_shader_parameter("texture_scale_1", texture_scale_1)
+	terrain_material.set_shader_parameter("texture_scale_2", texture_scale_2)
+	terrain_material.set_shader_parameter("texture_scale_3", texture_scale_3)
+	terrain_material.set_shader_parameter("texture_scale_4", texture_scale_4)
+	terrain_material.set_shader_parameter("texture_scale_5", texture_scale_5)
+	terrain_material.set_shader_parameter("texture_scale_6", texture_scale_6)
+	terrain_material.set_shader_parameter("texture_scale_7", texture_scale_7)
+	terrain_material.set_shader_parameter("texture_scale_8", texture_scale_8)
+	terrain_material.set_shader_parameter("texture_scale_9", texture_scale_9)
+	terrain_material.set_shader_parameter("texture_scale_10", texture_scale_10)
+	terrain_material.set_shader_parameter("texture_scale_11", texture_scale_11)
+	terrain_material.set_shader_parameter("texture_scale_12", texture_scale_12)
+	terrain_material.set_shader_parameter("texture_scale_13", texture_scale_13)
+	terrain_material.set_shader_parameter("texture_scale_14", texture_scale_14)
+	terrain_material.set_shader_parameter("texture_scale_15", texture_scale_15)
+	terrain_material.set_shader_parameter("texture_scale_16", texture_scale_16)
+
 	# GRASS MATERIAL - Grass Textures 
 	grass_mat.set_shader_parameter("grass_texture", grass_sprite)
 	grass_mat.set_shader_parameter("grass_texture_2", grass_sprite_tex_2)

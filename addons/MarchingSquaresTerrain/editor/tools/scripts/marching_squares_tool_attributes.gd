@@ -108,6 +108,8 @@ func show_tool_attributes(tool_index: int) -> void:
 		new_attributes.append(attribute_list.texture_preset)
 	if tool_attributes.quick_paint_selection:
 		new_attributes.append(attribute_list.quick_paint_selection)
+	if tool_attributes.paint_walls:
+		new_attributes.append(attribute_list.paint_walls)
 	if tool_attributes.chunk_management:
 		new_attributes.append(attribute_list.chunk_management)
 	if tool_attributes.terrain_settings:
@@ -511,6 +513,8 @@ func _get_setting_value(p_setting_name: String) -> Variant:
 			return plugin.current_texture_preset
 		"quick_paint_selection":
 			return plugin.current_quick_paint
+		"paint_walls":
+			return plugin.paint_walls_mode
 		"chunk_management":
 			pass
 		"terrain_settings":

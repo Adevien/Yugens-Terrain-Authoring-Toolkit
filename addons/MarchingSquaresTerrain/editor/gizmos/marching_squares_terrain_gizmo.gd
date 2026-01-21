@@ -80,10 +80,11 @@ func _redraw():
 	var terrain_chunk_hovered: bool = terrain_plugin.terrain_hovered and terrain_system.chunks.has(terrain_plugin.current_hovered_chunk)
 	
 	if terrain_chunk_hovered:
-		var brush_transform = Transform3D(Vector3.RIGHT * terrain_plugin.brush_size, Vector3.UP, Vector3.BACK * terrain_plugin.brush_size, pos)
-		if terrain_plugin.mode != terrain_plugin.TerrainToolMode.SMOOTH and terrain_plugin.mode != terrain_plugin.TerrainToolMode.VERTEX_PAINTING and terrain_plugin.mode != terrain_plugin.TerrainToolMode.GRASS_MASK and  terrain_plugin.mode != terrain_plugin.TerrainToolMode.DEBUG_BRUSH:
+		# Standard horizontal brush transform
+		var brush_transform : Transform3D = Transform3D(Vector3.RIGHT * terrain_plugin.brush_size, Vector3.UP, Vector3.BACK * terrain_plugin.brush_size, pos)
+		if terrain_plugin.mode != terrain_plugin.TerrainToolMode.SMOOTH and terrain_plugin.mode != terrain_plugin.TerrainToolMode.GRASS_MASK and terrain_plugin.mode != terrain_plugin.TerrainToolMode.DEBUG_BRUSH:
 			add_mesh(terrain_plugin.BRUSH_RADIUS_VISUAL, null, brush_transform)
-		
+
 		pos = terrain_plugin.brush_position
 		
 		var pos_tl := Vector2(pos.x + terrain_system.cell_size.x - terrain_plugin.brush_size/2, pos.z + terrain_system.cell_size.y - terrain_plugin.brush_size/2)

@@ -94,6 +94,13 @@ var quick_paint_selection : Dictionary = {
 	"default": null,
 }
 
+var paint_walls : Dictionary = {
+	"name": "paint_walls",
+	"type": "checkbox",
+	"label": "Paint Walls",
+	"default": false,
+}
+
 var chunk_management : Dictionary = {
 	"name": "chunk_management",
 	"type": "chunk",
