@@ -74,7 +74,6 @@ var current_texture_preset : MarchingSquaresTexturePreset = null:
 	set(value):
 		current_texture_preset = value
 		if not _syncing_from_terrain:
-			vp_texture_names.texture_names = value.new_tex_names.texture_names
 			_set_new_textures(value)
 
 # Currently selected preset for quick painting (does NOT change the global terrain)
@@ -1120,6 +1119,8 @@ func _set_new_textures(_preset: MarchingSquaresTexturePreset) -> void:
 							current_terrain_node.tex5_has_grass = val
 						4:
 							current_terrain_node.tex6_has_grass = val
+	
+	vp_texture_names.texture_names = _preset.new_tex_names.texture_names
 	
 	# Apply a batch update
 	current_terrain_node.force_batch_update()
