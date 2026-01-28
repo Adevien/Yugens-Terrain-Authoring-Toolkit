@@ -218,6 +218,7 @@ func add_texture_settings() -> void:
 	var m_cont := MarginContainer.new()
 	m_cont.add_theme_constant_override("margin_bottom", 7)
 	var export_button = MarchingSquaresTexturePresetExporter.new()
+	export_button.current_terrain_node = terrain
 	m_cont.add_child(export_button, true)
 	vbox.add_child(m_cont, true)
 	

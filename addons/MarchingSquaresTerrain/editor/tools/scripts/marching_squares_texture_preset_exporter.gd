@@ -6,6 +6,8 @@ class_name MarchingSquaresTexturePresetExporter
 const PRESET_DIR = "res://addons/MarchingSquaresTerrain/resources/texture presets/"
 const TEXTURE_NAMES = preload("res://addons/MarchingSquaresTerrain/resources/texture_names.tres")
 
+var current_terrain_node : MarchingSquaresTerrain
+
 var texture_preset_data : MarchingSquaresTextureList
 var filename_dialog : AcceptDialog
 var filename_input : LineEdit
@@ -107,7 +109,6 @@ func _save_preset(path: String) -> void:
 
 func _get_current_texture_data() -> MarchingSquaresTextureList:
 	var new_texture_list := MarchingSquaresTextureList.new()
-	var current_terrain_node : MarchingSquaresTerrain = get_parent().get_parent().get_parent().plugin.current_terrain_node #There has to be a better way to do this but this works for now
 	
 	for i in range(5): # The range is 5 because MarchingSquaresTextureList has 5 export variables (terrain textures, texture scales, grass sprites, grass colors, has_grass)
 		match i:
