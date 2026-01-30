@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode diffuse_toon, depth_draw_always, alpha_to_coverage, cull_disabled;
+render_mode diffuse_toon, depth_prepass_alpha, alpha_to_coverage, cull_disabled;
 
 group_uniforms Albedo;
 uniform float wall_threshold : hint_range(0.0, 0.5) = 0.0;
