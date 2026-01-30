@@ -26,10 +26,9 @@ Watch the [YouTube](https://www.youtube.com/watch?v=TV3QyGNMAwo) video to get st
 
 ## Known Issues
 
-1. Collision shapes dissapear when in front of a MarchingSquaresTerrain node
-2. Brush visuals and cell data doesn't scale with cell_size so very small and very big cell sizes don't work properly
-3. Running physics on a separate thread crashes the plugin (will be fixed in 1.2)
-4. Terrain sizes are very big causing warning messages (will be fixed in 1.2)
+1. Brush visuals and cell data doesn't scale with cell_size so very small and very big cell sizes don't work properly (will be fixed in 1.2)
+2. Running physics on a separate thread crashes the plugin (will be fixed in 1.2)
+3. Terrain sizes are very big causing warning messages (will be fixed in 1.2)
 
 ## Credits
 

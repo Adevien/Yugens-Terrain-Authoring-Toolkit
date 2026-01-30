@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode diffuse_toon, depth_prepass_alpha;
+render_mode diffuse_toon, depth_draw_opaque;
 
 // Spherical billboarding
 // Wind animations (Change this to fit your needs!)
@@ -110,6 +110,7 @@ void vertex() {
 }
 
 void fragment() {
+	ALPHA_SCISSOR_THRESHOLD = 0.5;
 	vec4 grass_tex = texture(grass_texture, UV);
 	vec3 grass_color = use_base_color ? grass_base_color : instance_color * grass_base_color;
 

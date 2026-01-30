@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode diffuse_toon, depth_prepass_alpha, alpha_to_coverage, cull_disabled;
+render_mode diffuse_toon, depth_draw_opaque, alpha_to_coverage, cull_disabled;
 
 group_uniforms Albedo;
 uniform float wall_threshold : hint_range(0.0, 0.5) = 0.0;
@@ -301,6 +301,7 @@ void vertex() {
 }
 
 void fragment() {
+	ALPHA_SCISSOR_THRESHOLD = 0.5;
 	vec2 tiling_factor_floor = vec2(1.0 / float(chunk_size.x), 1.0 / float(chunk_size.z));
 	vec2 tiling_factor_wall = vec2(1.0 / float(chunk_size.x), 1.0 / float(chunk_size.y));
 	float is_ridge = custom1.g;

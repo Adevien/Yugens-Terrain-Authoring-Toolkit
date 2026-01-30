@@ -203,6 +203,9 @@ func regenerate_mesh():
 		if child is StaticBody3D:
 			child.collision_layer = 17
 			child.set_collision_layer_value(terrain_system.extra_collision_layer, true)
+			for _child in child.get_children():
+				if _child is CollisionShape3D:
+					_child.set_visible(false)
 	
 	var elapsed_time: int = Time.get_ticks_msec() - start_time
 	print_verbose("Generated terrain in "+str(elapsed_time)+"ms")
